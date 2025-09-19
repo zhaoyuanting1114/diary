@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《圈养人类日记》</title>
+    <style>
+        /* ====== 基础设置 ====== */
+        :root {
+            --neon-blue: #00f6ff;
+            --neon-purple: #9d00ff;
+            --neon-pink: #ff00d6;
+            --dark-bg: #0a041f;
+            --darker-bg: #050216;
+            --light-bg: #fdfdfd;
+            --lighter-bg: #f5f5f5;
+            --text-dark: #e0e0e0;
+            --text-light: #222;
+            --border-dark: rgba(255,255,255,0.15);
+            --border-light: rgba(0,0,0,0.1);
+            --shadow-glow: 0 0 15px rgba(157, 0, 255, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        /* ====== 动态背景 ====== */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(157, 0, 255, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(0, 246, 255, 0.1) 0%, transparent 40%),
+                linear-gradient(90deg, rgba(157, 0, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(rgba(0, 246, 255, 0.05) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 20px 20px, 20px 20px;
+            animation: move 60s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes move { 
+            from { background-position: 0 0, 0 0, 0 0, 0 0; } 
+            to { background-position: 0 0, 0 0, 600px 600px, 600px 600px; } 
+        }
+
+        /* ====== 容器 ====== */
+        .container {
+            max-width: 800px;
+            height: 100vh;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            background: rgba(10, 4, 31, 0.8);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        body.light .container {
+            background: rgba(253, 253, 253, 0.9);
+        }
+
+        header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-dark);
+            background: var(--darker-bg);
+        }
+
+        .app-title {
+            font-weight: bold;
+            font-size: 22px;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 5px rgba(157, 0, 255, 0.5);
+        }
+
+        .diary-info {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* ====== 工具栏 ====== */
+        .toolbar {
+            padding: 10px 15px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-dark);
+            background: var(--darker-bg);
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            background: transparent;
+            color: var(--text-dark);
+            border: 1px solid var(--border-dark);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: rgba(157, 0, 255, 0.2);
+            border-color: var(--neon-purple);
+        }
+
+        .format-buttons {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+        }
+
+        /* ====== 内容区域 ====== */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            line-height: 1.7;
+            font-size: 16px;
+            outline: none;
+        }
+
+        /* ====== 底部按钮 ====== */
+        .buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        button {
+            background: var(--neon-purple);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: var(--shadow-glow);
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        /* ====== 日间模式 ====== */
+        body.light { 
+            background: var(--light-bg); 
+            color: var(--text-light); 
+        }
+        
+        body.light::before {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(157, 0, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(0, 246, 255, 0.05) 0%, transparent 40%),
+                linear-gradient(90deg, rgba(157, 0, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(0, 246, 255, 0.03) 1px, transparent 1px);
+        }
+        
+        body.light header, 
+        body.light .toolbar {
+            background: var(--lighter-bg);
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        body.light .tool-btn {
+            color: var(--text-light);
+            border: 1px solid var(--border-light);
+        }
+        
+        body.light .tool-btn:hover {
+            background: rgba(157, 0, 255, 0.1);
+        }
+
+        /* ====== 模态框 ====== */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--darker-bg);
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        body.light .modal-content {
+            background: var(--lighter-bg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-dark);
+        }
+
+        body.light .modal-header {
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+
+        body.light .modal-close {
+            color: var(--text-light);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-dark);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-dark);
+            margin-bottom: 15px;
+        }
+
+        body.light .modal-input {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
+            color: var(--text-light);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* ====== 日记列表 ====== */
+        .diary-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .diary-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-dark);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .diary-item:hover {
+            background: rgba(157, 0, 255, 0.1);
+        }
+
+        body.light .diary-item {
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .diary-item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .diary-item-date {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* ====== 响应式设计 ====== */
+        @media (max-width: 600px) {
+            .container {
+                max-width: 100%;
+            }
+            
+            .toolbar {
+                padding: 8px 10px;
+            }
+            
+            .tool-btn {
+                padding: 5px 8px;
+                font-size: 13px;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            button {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="app-title">《圈养人类日记》</div>
+            <div class="diary-info" id="diaryInfo">新日记</div>
+        </header>
+        
+        <div class="toolbar">
+            <button class="tool-btn" onclick="newDiary()">📝 新建日记</button>
+            <button class="tool-btn" onclick="showDiaryList()">📚 日记列表</button>
+            <button class="tool-btn" onclick="searchDiary()">🔍 搜索</button>
+            <button class="tool-btn" onclick="exportData()">💾 导出数据</button>
+            
+            <div class="format-buttons">
+                <button class="tool-btn" onclick="formatText('bold')"><b>B</b></button>
+                <button class="tool-btn" onclick="formatText('italic')"><i>I</i></button>
+                <button class="tool-btn" onclick="formatText('underline')"><u>U</u></button>
+            </div>
+        </div>
+        
+        <div class="content" id="content" contenteditable="true">
+            在这里写下你的日记内容……
+        </div>
+    </div>
+
+    <div class="buttons">
+        <button onclick="toggleMode()">🌗 日夜切换</button>
+        <button onclick="scrollTopSmooth()">🔝 返回顶部</button>
+    </div>
+
+    <!-- 日记列表模态框 -->
+    <div class="modal" id="diaryListModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>日记列表</h3>
+                <button class="modal-close" onclick="hideModal('diaryListModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <ul class="diary-list" id="diaryList">
+                    <!-- 日记列表将通过JS动态生成 -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建日记模态框 -->
+    <div class="modal" id="newDiaryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新建日记</h3>
+                <button class="modal-close" onclick="hideModal('newDiaryModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="modal-input" id="newDiaryTitle" placeholder="日记标题">
+            </div>
+            <div class="modal-footer">
+                <button class="tool-btn" onclick="hideModal('newDiaryModal')">取消</button>
+                <button class="tool-btn" onclick="createNewDiary()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索模态框 -->
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>搜索日记</h3>
+                <button class="modal-close" onclick="hideModal('searchModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="modal-input" id="searchInput" placeholder="输入搜索关键词" onkeyup="searchKeywords(this.value)">
+                <div class="search-results" id="searchResults">
+                    <!-- 搜索结果将通过JS动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 当前日记数据
+        let currentDiary = {
+            id: null,
+            title: '新日记',
+            content: '',
+            date: new Date()
+        };
+        
+        // 所有日记数据
+        let diaries = [];
+
+        // 初始化
+        function init() {
+            loadDiaries();
+            
+            // 如果没有日记，创建一个默认日记
+            if (diaries.length === 0) {
+                createDefaultDiary();
+            } else {
+                // 加载最新日记
+                loadDiary(diaries[0].id);
+            }
+            
+            // 设置自动保存
+            setupAutoSave();
+            
+            // 更新日记信息显示
+            updateDiaryInfo();
+        }
+        
+        // 加载所有日记
+        function loadDiaries() {
+            const savedDiaries = localStorage.getItem('diaries');
+            if (savedDiaries) {
+                diaries = JSON.parse(savedDiaries);
+            }
+        }
+        
+        // 保存所有日记
+        function saveDiaries() {
+            localStorage.setItem('diaries', JSON.stringify(diaries));
+        }
+        
+        // 创建默认日记
+        function createDefaultDiary() {
+            currentDiary = {
+                id: Date.now().toString(),
+                title: '新日记',
+                content: '在这里写下你的日记内容……',
+                date: new Date()
+            };
+            
+            diaries.unshift(currentDiary);
+            saveDiaries();
+            
+            document.getElementById('content').innerHTML = currentDiary.content;
+            updateDiaryInfo();
+        }
+        
+        // 加载指定日记
+        function loadDiary(id) {
+            const diary = diaries.find(d => d.id === id);
+            if (diary) {
+                currentDiary = diary;
+                document.getElementById('content').innerHTML = diary.content;
+                updateDiaryInfo();
+            }
+        }
+        
+        // 更新日记信息显示
+        function updateDiaryInfo() {
+            const dateStr = currentDiary.date.toLocaleDateString('zh-CN');
+            document.getElementById('diaryInfo').textContent = `${currentDiary.title} - ${dateStr}`;
+        }
+        
+        // 设置自动保存
+        function setupAutoSave() {
+            const contentElem = document.getElementById('content');
+            
+            contentElem.addEventListener('input', () => {
+                currentDiary.content = contentElem.innerHTML;
+                currentDiary.date = new Date();
+                
+                // 更新日记列表中的对应日记
+                const index = diaries.findIndex(d => d.id === currentDiary.id);
+                if (index !== -1) {
+                    diaries[index] = currentDiary;
+                    saveDiaries();
+                    updateDiaryInfo();
+                }
+            });
+        }
+        
+        // 夜间/日间切换
+        function toggleMode() {
+            document.body.classList.toggle("light");
+        }
+
+        // 平滑返回顶部
+        function scrollTopSmooth() {
+            document.getElementById("content").scrollTo({top:0, behavior:"smooth"});
+        }
+        
+        // 显示模态框
+        function showModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        
+        // 隐藏模态框
+        function hideModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        
+        // 新建日记
+        function newDiary() {
+            showModal('newDiaryModal');
+        }
+        
+        // 创建新日记
+        function createNewDiary() {
+            const title = document.getElementById('newDiaryTitle').value || '新日记';
+            
+            const newDiary = {
+                id: Date.now().toString(),
+                title: title,
+                content: '',
+                date: new Date()
+            };
+            
+            diaries.unshift(newDiary);
+            saveDiaries();
+            loadDiary(newDiary.id);
+            
+            hideModal('newDiaryModal');
+            document.getElementById('newDiaryTitle').value = '';
+        }
+        
+        // 显示日记列表
+        function showDiaryList() {
+            const diaryListElem = document.getElementById('diaryList');
+            diaryListElem.innerHTML = '';
+            
+            diaries.forEach(diary => {
+                const li = document.createElement('li');
+                li.className = 'diary-item';
+                li.onclick = () => {
+                    loadDiary(diary.id);
+                    hideModal('diaryListModal');
+                };
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'diary-item-title';
+                titleDiv.textContent = diary.title;
+                
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'diary-item-date';
+                dateDiv.textContent = new Date(diary.date).toLocaleString('zh-CN');
+                
+                li.appendChild(titleDiv);
+                li.appendChild(dateDiv);
+                diaryListElem.appendChild(li);
+            });
+            
+            showModal('diaryListModal');
+        }
+        
+        // 搜索日记
+        function searchDiary() {
+            showModal('searchModal');
+        }
+        
+        // 搜索关键词
+        function searchKeywords(keyword) {
+            const resultsElem = document.getElementById('searchResults');
+            resultsElem.innerHTML = '';
+            
+            if (!keyword.trim()) return;
+            
+            const results = diaries.filter(diary => 
+                diary.title.includes(keyword) || diary.content.includes(keyword)
+            );
+            
+            if (results.length === 0) {
+                resultsElem.innerHTML = '<div class="diary-item">未找到匹配的日记</div>';
+                return;
+            }
+            
+            results.forEach(diary => {
+                const div = document.createElement('div');
+                div.className = 'diary-item';
+                div.onclick = () => {
+                    loadDiary(diary.id);
+                    hideModal('searchModal');
+                };
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'diary-item-title';
+                titleDiv.textContent = diary.title;
+                
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'diary-item-date';
+                dateDiv.textContent = new Date(diary.date).toLocaleString('zh-CN');
+                
+                div.appendChild(titleDiv);
+                div.appendChild(dateDiv);
+                resultsElem.appendChild(div);
+            });
+        }
+        
+        // 导出数据
+        function exportData() {
+            const dataStr = JSON.stringify(diaries, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = '圈养人类日记备份.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        // 格式化文本
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            document.getElementById('content').focus();
+        }
+        
+        // 初始化应用
+        window.onload = init;
+    </script>
+</body>
+</html>
